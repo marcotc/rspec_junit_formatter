@@ -79,6 +79,11 @@ private
     notification.example.full_description
   end
 
+  def pending_message_for(notification)
+    result = notification.example.execution_result
+    result.pending_message if result.respond_to?(:pending_message)
+  end
+
   def failure_type_for(example)
     exception_for(example).class.name
   end

@@ -50,6 +50,16 @@ private
 
   def xml_dump_pending(example)
     xml_dump_example(example) do
+      xml_dump_skipped(pending_message_for(example))
+    end
+  end
+
+  def xml_dump_skipped(message)
+    if message && !message.empty?
+      output << %{<skipped message="#{escape(message)}">}
+      output << escape(message)
+      output << %{</skipped>}
+    else
       output << %{<skipped/>}
     end
   end

@@ -16,9 +16,9 @@ describe "some example specs" do
 
   it "should be pending" do
     if defined? skip
-      skip
+      skip "not implemented yet"
     else
-      pending
+      pending "not implemented yet"
     end
   end
 

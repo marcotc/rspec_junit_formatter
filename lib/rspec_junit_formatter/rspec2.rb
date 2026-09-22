@@ -40,6 +40,11 @@ private
     example.full_description
   end
 
+  def pending_message_for(example)
+    result = example.execution_result
+    result[:pending_message] if result.respond_to?(:[])
+  end
+
   def exception_for(example)
     example.execution_result[:exception]
   end

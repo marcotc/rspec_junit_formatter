@@ -101,8 +101,8 @@ describe RspecJunitFormatter do
       expect(testcase.element_children.size).to eql(1)
       child = testcase.element_children.first
       expect(child.name).to eql("skipped")
-      expect(child.attributes).to be_empty
-      expect(child.text).to be_empty
+      expect(child["message"]).to eql("not implemented yet")
+      expect(child.text).to eql("not implemented yet")
     end
 
     # it has failed test cases
