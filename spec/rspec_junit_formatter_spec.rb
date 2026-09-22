@@ -98,7 +98,7 @@ describe RspecJunitFormatter do
     successful_testcases.each do |testcase|
       expect(testcase).not_to be(nil)
       # test results that capture stdout / stderr are not 'empty'
-      if testcase.xpath("system-out|system-err").empty?
+      if testcase.xpath("system-out|system-err|properties").empty?
         expect(testcase.children).to be_empty
       end
     end
