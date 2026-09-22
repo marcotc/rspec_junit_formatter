@@ -97,11 +97,47 @@ private
   end
 
   def failure_for(notification)
-    strip_diff_colors(notification.message_lines.join("\n")) << "\n" << notification.formatted_backtrace.join("\n")
+    exception = exception_for(notification)
+    if aggregate_failure_exception?(exception)
+      strip_diff_colors(aggregate_failure_for(notification, exception))
+    else
+      strip_diff_colors(notification.message_lines.join("\n")) << "\n" << notification.formatted_backtrace.join("\n")
+    end
   end
 
   def exception_for(notification)
     notification.example.execution_result.exception
+  end
+
+  def aggregate_failure_exception?(exception)
+    aggregate_failure_exceptions(exception).size > 1
+  end
+
+  def aggregate_failure_exceptions(exception)
+    if exception.respond_to?(:all_exceptions)
+      exception.all_exceptions
+    elsif exception.respond_to?(:failures)
+      exception.failures
+    else
+      []
+    end
+  end
+
+  def aggregate_failure_for(notification, exception)
+    lines = [exception.message]
+    aggregate_failure_exceptions(exception).each_with_index do |subexception, index|
+      lines << nil
+      lines << "#{index + 1}) #{subexception.class}"
+      lines << subexception.message
+    end
+
+    formatted_backtrace = notification.formatted_backtrace
+    unless formatted_backtrace.empty?
+      lines << nil
+      lines.concat(formatted_backtrace)
+    end
+
+    lines.join("\n")
   end
 
   # rspec makes it really difficult to swap in configuration temporarily due to

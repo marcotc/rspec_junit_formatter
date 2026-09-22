@@ -52,6 +52,11 @@ describe RspecJunitFormatter do
   let(:failed_testcases) { doc.xpath("/testsuite/testcase[failure]") }
   let(:shared_testcases) { doc.xpath("/testsuite/testcase[contains(@name, 'shared example')]") }
   let(:failed_shared_testcases) { doc.xpath("/testsuite/testcase[contains(@name, 'shared example')][failure]") }
+  let(:aggregate_failure_testcases) { doc.xpath("/testsuite/testcase[contains(@name, 'aggregate failure details')]") }
+
+  let(:has_aggregate_failure_example) { aggregate_failure_testcases.any? }
+  let(:expected_test_count) { has_aggregate_failure_example ? 14 : 13 }
+  let(:expected_failure_count) { has_aggregate_failure_example ? 9 : 8 }
 
   # Combined into a single example so we don't have to re-run the example rspec
   # process over and over. (We need to change the parameters in later specs so
@@ -64,9 +69,9 @@ describe RspecJunitFormatter do
     expect(doc.errors).to be_empty
 
     expect(testsuite["name"]).to eql("rspec")
-    expect(testsuite["tests"]).to eql("13")
+    expect(testsuite["tests"]).to eql(expected_test_count.to_s)
     expect(testsuite["skipped"]).to eql("1")
-    expect(testsuite["failures"]).to eql("8")
+    expect(testsuite["failures"]).to eql(expected_failure_count.to_s)
     expect(testsuite["errors"]).to eql("0")
     expect(Time.parse(testsuite["timestamp"])).to be_within(60).of(Time.now)
     expect(testsuite["time"].to_f).to be > 0
@@ -74,7 +79,7 @@ describe RspecJunitFormatter do
 
     # it has some test cases
 
-    expect(testcases.size).to eql(13)
+    expect(testcases.size).to eql(expected_test_count)
 
     testcases.each do |testcase|
       expect(testcase["classname"]).to eql("spec.example_spec")
@@ -110,7 +115,7 @@ describe RspecJunitFormatter do
 
     # it has failed test cases
 
-    expect(failed_testcases.size).to eql(8)
+    expect(failed_testcases.size).to eql(expected_failure_count)
 
     failed_testcases.each do |testcase|
       expect(testcase).not_to be(nil)
@@ -143,6 +148,16 @@ describe RspecJunitFormatter do
     diff_testcase_failure = doc.xpath("//testcase[contains(@name, 'diffs')]/failure").first
     expect(diff_testcase_failure[:message]).not_to match(/\e | \\e/x)
     expect(diff_testcase_failure.text).not_to match(/\e | \\e/x)
+
+    # it keeps aggregate failures in one node with all sub-failure details
+
+    if has_aggregate_failure_example
+      aggregate_failure = aggregate_failure_testcases.first.xpath("failure").first
+      expect(aggregate_failure_testcases.first.xpath("failure").size).to eql(1)
+      expect(aggregate_failure.text).to include(%{expected: "bravo"})
+      expect(aggregate_failure.text).to include(%{expected: "delta"})
+      expect(aggregate_failure.text).not_to match(/\e | \\e/x)
+    end
 
     # it correctly replaces illegal characters
 

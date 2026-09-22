@@ -53,4 +53,11 @@ describe "some example specs" do
     $stdout.write "\xC3".b
     $stderr.write "\xFF".b
   end
+
+  if defined?(RSpec::Expectations::MultipleExpectationsNotMetError)
+    it "reports aggregate failure details", aggregate_failures: true do
+      expect("alpha").to eql("bravo")
+      expect("charlie").to eql("delta")
+    end
+  end
 end
