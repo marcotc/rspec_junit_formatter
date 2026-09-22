@@ -40,14 +40,27 @@ private
     output << %{ timestamp="#{escape(started.iso8601)}"}
     output << %{ hostname="#{escape(Socket.gethostname)}"}
     output << %{>\n}
-    output << %{<properties>\n}
-    output << %{<property}
-    output << %{ name="seed"}
-    output << %{ value="#{escape(RSpec.configuration.seed.to_s)}"}
-    output << %{/>\n}
-    output << %{</properties>\n}
+    xml_dump_properties
     xml_dump_examples
     output << %{</testsuite>\n}
+  end
+
+  def xml_dump_properties
+    output << %{<properties>\n}
+    suite_properties.each do |name, value|
+      output << %{<property}
+      output << %{ name="#{escape(name)}"}
+      output << %{ value="#{escape(value)}"}
+      output << %{/>\n}
+    end
+    output << %{</properties>\n}
+  end
+
+  def suite_properties
+    [
+      ["seed".freeze, RSpec.configuration.seed.to_s],
+      ["rspec.version".freeze, RSpec::Core::Version::STRING],
+    ]
   end
 
   def xml_dump_examples

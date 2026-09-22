@@ -46,6 +46,7 @@ describe RspecJunitFormatter do
   let(:doc) { Nokogiri::XML(formatter_output) { |config| config.strict } }
 
   let(:testsuite) { doc.xpath("/testsuite").first }
+  let(:suite_properties) { doc.xpath("/testsuite/properties/property") }
   let(:testcases) { doc.xpath("/testsuite/testcase") }
   let(:successful_testcases) { doc.xpath("/testsuite/testcase[not(failure) and not(skipped)]") }
   let(:pending_testcases) { doc.xpath("/testsuite/testcase[skipped]") }
@@ -76,6 +77,7 @@ describe RspecJunitFormatter do
     expect(Time.parse(testsuite["timestamp"])).to be_within(60).of(Time.now)
     expect(testsuite["time"].to_f).to be > 0
     expect(testsuite["hostname"]).not_to be_empty
+    expect(suite_properties.xpath("self::property[@name='rspec.version']").first["value"]).to eql(RSpec::Core::Version::STRING)
 
     # it has some test cases
 
