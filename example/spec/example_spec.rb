@@ -2,7 +2,7 @@ require "spec_helper"
 require_relative "shared_examples"
 
 describe "some example specs" do
-  it "should succeed" do
+  it "should succeed", custom_scalar: "visible", custom_array: ["hidden"] do
     expect(true).to be(true)
   end
 

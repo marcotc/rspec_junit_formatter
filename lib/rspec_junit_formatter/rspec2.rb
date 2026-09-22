@@ -92,4 +92,8 @@ private
   def stderr_for(example)
     example.metadata[:stderr]
   end
+
+  def metadata_for(example)
+    example.metadata
+  end
 end

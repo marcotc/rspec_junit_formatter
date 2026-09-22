@@ -230,6 +230,19 @@ describe RspecJunitFormatter do
     end
   end
 
+  context "with metadata properties enabled" do
+    let(:extra_arguments) { ["--require", "./spec/include_metadata_properties"] }
+
+    it "exports allowlisted scalar metadata as testcase properties" do
+      testcase = doc.xpath("/testsuite/testcase[contains(@name, 'should succeed')]").first
+      properties = testcase.xpath("properties/property")
+
+      expect(properties.xpath("self::property[@name='custom_scalar']").first["value"]).to eql("visible")
+      expect(properties.xpath("self::property[@name='custom_array']")).to be_empty
+      expect(properties.xpath("self::property[@name='aggregate_failures']")).to be_empty
+    end
+  end
+
   context "when $TEST_ENV_NUMBER is set" do
     around do |example|
       begin

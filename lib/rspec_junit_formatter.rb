@@ -12,6 +12,7 @@ class RSpecJUnitFormatter < RSpec::Core::Formatters::BaseFormatter
   # rspec 2 and 3 implements are in separate files.
   class << self
     attr_writer :include_line_number
+    attr_writer :metadata_properties
 
     def include_line_number
       if instance_variable_defined?(:@include_line_number)
@@ -22,9 +23,20 @@ class RSpecJUnitFormatter < RSpec::Core::Formatters::BaseFormatter
         false
       end
     end
+
+    def metadata_properties
+      if instance_variable_defined?(:@metadata_properties)
+        @metadata_properties
+      elsif superclass.respond_to?(:metadata_properties)
+        superclass.metadata_properties
+      else
+        []
+      end
+    end
   end
 
   self.include_line_number = false
+  self.metadata_properties = []
 
 private
 
@@ -116,8 +128,56 @@ private
     end
     output << %{>}
     yield if block_given?
+    xml_dump_metadata_properties(example)
     xml_dump_output(example)
     output << %{</testcase>\n}
+  end
+
+  SCALAR_METADATA_CLASSES = [
+    String,
+    Symbol,
+    Numeric,
+    TrueClass,
+    FalseClass,
+    NilClass,
+  ].freeze
+
+  def xml_dump_metadata_properties(example)
+    properties = metadata_properties_for(example)
+    return if properties.empty?
+
+    output << %{<properties>}
+    properties.each do |name, value|
+      output << %{<property}
+      output << %{ name="#{escape(name)}"}
+      output << %{ value="#{escape(value)}"}
+      output << %{/>\n}
+    end
+    output << %{</properties>}
+  end
+
+  def metadata_properties_for(example)
+    metadata = metadata_for(example)
+    Array(self.class.metadata_properties).each_with_object([]) do |key, properties|
+      metadata_key = metadata_key_for(metadata, key)
+      next unless metadata_key
+
+      value = metadata[metadata_key]
+      next unless scalar_metadata_value?(value)
+
+      properties << [key.to_s, value.to_s]
+    end
+  end
+
+  def metadata_key_for(metadata, key)
+    return key if metadata.key?(key)
+
+    symbol_key = key.to_sym if key.respond_to?(:to_sym)
+    symbol_key if symbol_key && metadata.key?(symbol_key)
+  end
+
+  def scalar_metadata_value?(value)
+    SCALAR_METADATA_CLASSES.any? { |klass| value.is_a?(klass) }
   end
 
   def xml_dump_output(example)

@@ -76,6 +76,18 @@ require "rspec_junit_formatter"
 RspecJunitFormatter.include_line_number = true
 ```
 
+### Optional metadata properties
+
+The formatter does not export arbitrary RSpec metadata by default. To export a small allowlist of scalar metadata values as testcase `<property>` entries, configure `metadata_properties` before the formatter runs:
+
+```ruby
+require "rspec_junit_formatter"
+
+RspecJunitFormatter.metadata_properties = [:type, :aggregate_failures]
+```
+
+Only strings, symbols, numbers, booleans, and nil values are exported.
+
 ### Capturing output
 
 If you like, you can capture the standard output and error streams of each test into the `:stdout` and `:stderr` example metadata which will be added to the junit report, e.g.:

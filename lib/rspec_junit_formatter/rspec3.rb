@@ -186,6 +186,10 @@ private
   def stderr_for(example_notification)
     example_notification.example.metadata[:stderr]
   end
+
+  def metadata_for(example_notification)
+    example_notification.example.metadata
+  end
 end
 
 # rspec-core 3.0.x forgot to mark this as a module function which causes:
