@@ -66,6 +66,16 @@ For use with `parallel_tests`, add `$TEST_ENV_NUMBER` in the output file option 
 
 The formatter includes `$TEST_ENV_NUMBER` in the test suite name within the XML, too.
 
+### Optional line numbers
+
+The formatter omits testcase line numbers by default for broad compatibility with JUnit XML consumers. To include the RSpec example line number as a `line` attribute, enable it before the formatter runs:
+
+```ruby
+require "rspec_junit_formatter"
+
+RspecJunitFormatter.include_line_number = true
+```
+
 ### Capturing output
 
 If you like, you can capture the standard output and error streams of each test into the `:stdout` and `:stderr` example metadata which will be added to the junit report, e.g.:

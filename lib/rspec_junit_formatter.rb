@@ -10,6 +10,21 @@ require "rspec/core/formatters/base_formatter"
 # Based on XML schema: http://windyroad.org/dl/Open%20Source/JUnit.xsd
 class RSpecJUnitFormatter < RSpec::Core::Formatters::BaseFormatter
   # rspec 2 and 3 implements are in separate files.
+  class << self
+    attr_writer :include_line_number
+
+    def include_line_number
+      if instance_variable_defined?(:@include_line_number)
+        @include_line_number
+      elsif superclass.respond_to?(:include_line_number)
+        superclass.include_line_number
+      else
+        false
+      end
+    end
+  end
+
+  self.include_line_number = false
 
 private
 
@@ -80,6 +95,9 @@ private
     output << %{ classname="#{escape(classname_for(example))}"}
     output << %{ name="#{escape(description_for(example))}"}
     output << %{ file="#{escape(example_group_file_path_for(example))}"}
+    if self.class.include_line_number && (line_number = line_number_for(example))
+      output << %{ line="#{escape(line_number)}"}
+    end
     if duration = duration_for(example)
       output << %{ time="#{escape("%.6f" % duration)}"}
     end

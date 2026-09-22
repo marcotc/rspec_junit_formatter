@@ -80,6 +80,7 @@ describe RspecJunitFormatter do
       expect(testcase["classname"]).to eql("spec.example_spec")
       expect(testcase["name"]).not_to be_empty
       expect(testcase["file"]).to eql("./spec/example_spec.rb")
+      expect(testcase["line"]).to be_nil
       expect(testcase["time"].to_f).to be > 0
     end
 
@@ -193,6 +194,22 @@ describe RspecJunitFormatter do
 
     it "escapes reserved XML characters" do
       expect(escape(%{"&'<>})).to eql("&quot;&amp;&apos;&lt;&gt;")
+    end
+  end
+
+  context "with line numbers enabled" do
+    let(:extra_arguments) { ["--require", "./spec/include_line_numbers"] }
+
+    it "includes numeric line attributes on testcases" do
+      expect(testcases).not_to be_empty
+      testcases.each do |testcase|
+        expect(testcase["line"]).to match(/\A\d+\z/)
+      end
+
+      shared_testcases.each do |testcase|
+        expect(testcase["file"]).to eql("./spec/example_spec.rb")
+        expect(testcase["line"]).to match(/\A\d+\z/)
+      end
     end
   end
 

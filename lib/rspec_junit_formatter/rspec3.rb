@@ -75,6 +75,10 @@ private
     notification.example.execution_result.run_time
   end
 
+  def line_number_for(notification)
+    notification.example.metadata[:line_number]
+  end
+
   def description_for(notification)
     notification.example.full_description
   end

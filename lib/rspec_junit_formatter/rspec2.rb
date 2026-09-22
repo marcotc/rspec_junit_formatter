@@ -36,6 +36,10 @@ private
     example.execution_result[:run_time]
   end
 
+  def line_number_for(example)
+    example.metadata[:line_number]
+  end
+
   def description_for(example)
     example.full_description
   end
