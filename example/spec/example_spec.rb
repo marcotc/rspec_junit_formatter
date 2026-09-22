@@ -48,4 +48,9 @@ describe "some example specs" do
     $stdout.puts "Test"
     $stderr.puts "Bar"
   end
+
+  it "can capture invalid bytes in stdout and stderr" do
+    $stdout.write "\xC3".b
+    $stderr.write "\xFF".b
+  end
 end

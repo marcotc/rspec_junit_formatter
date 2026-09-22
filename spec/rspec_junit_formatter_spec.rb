@@ -43,7 +43,7 @@ describe RspecJunitFormatter do
 
   let(:output) { execute_example_spec }
 
-  let(:doc) { Nokogiri::XML::Document.parse(formatter_output) }
+  let(:doc) { Nokogiri::XML(formatter_output) { |config| config.strict } }
 
   let(:testsuite) { doc.xpath("/testsuite").first }
   let(:testcases) { doc.xpath("/testsuite/testcase") }
@@ -61,9 +61,10 @@ describe RspecJunitFormatter do
     # it has a testsuite
 
     expect(testsuite).not_to be(nil)
+    expect(doc.errors).to be_empty
 
     expect(testsuite["name"]).to eql("rspec")
-    expect(testsuite["tests"]).to eql("12")
+    expect(testsuite["tests"]).to eql("13")
     expect(testsuite["skipped"]).to eql("1")
     expect(testsuite["failures"]).to eql("8")
     expect(testsuite["errors"]).to eql("0")
@@ -73,7 +74,7 @@ describe RspecJunitFormatter do
 
     # it has some test cases
 
-    expect(testcases.size).to eql(12)
+    expect(testcases.size).to eql(13)
 
     testcases.each do |testcase|
       expect(testcase["classname"]).to eql("spec.example_spec")
@@ -83,12 +84,12 @@ describe RspecJunitFormatter do
 
     # it has successful test cases
 
-    expect(successful_testcases.size).to eql(3)
+    expect(successful_testcases.size).to eql(4)
 
     successful_testcases.each do |testcase|
       expect(testcase).not_to be(nil)
       # test results that capture stdout / stderr are not 'empty'
-      unless (testcase["name"]) =~ /capture stdout and stderr/
+      if testcase.xpath("system-out|system-err").empty?
         expect(testcase.children).to be_empty
       end
     end
@@ -157,8 +158,40 @@ describe RspecJunitFormatter do
     expect(doc.xpath("//testcase[contains(@name, 'html')]").first[:name]).to eql(%{some example specs escapes <html tags='correctly' and="such &amp; such">})
 
     # it correctly captures stdout / stderr output
-    expect(doc.xpath("//testcase/system-out").text).to eql("Test\n")
-    expect(doc.xpath("//testcase/system-err").text).to eql("Bar\n")
+    captured_output = doc.xpath("//testcase[contains(@name, 'can capture stdout and stderr')]/system-out").text
+    captured_error = doc.xpath("//testcase[contains(@name, 'can capture stdout and stderr')]/system-err").text
+    invalid_byte_output = doc.xpath("//testcase[contains(@name, 'invalid bytes')]/system-out").text
+    invalid_byte_error = doc.xpath("//testcase[contains(@name, 'invalid bytes')]/system-err").text
+
+    expect(captured_output).to eql("Test\n")
+    expect(captured_error).to eql("Bar\n")
+    expect(invalid_byte_output).to eql("\\uFFFD")
+    expect(invalid_byte_error).to eql("\\uFFFD")
+  end
+
+  describe "#escape" do
+    let(:formatter) { described_class.allocate }
+
+    def escape(text)
+      formatter.send(:escape, text)
+    end
+
+    it "normalizes invalid and undefined bytes before XML escaping" do
+      invalid_utf8 = [0xc3].pack("C").force_encoding(Encoding::UTF_8)
+      binary = [0xff].pack("C").force_encoding(Encoding::ASCII_8BIT)
+
+      expect(escape(invalid_utf8)).to eql("\\uFFFD")
+      expect(escape(binary)).to eql("\\uFFFD")
+    end
+
+    it "keeps XML-invalid character replacement behavior" do
+      expect(escape("\0")).to eql("\\0")
+      expect(escape([0x01].pack("C"))).to eql("\\x01")
+    end
+
+    it "escapes reserved XML characters" do
+      expect(escape(%{"&'<>})).to eql("&quot;&amp;&apos;&lt;&gt;")
+    end
   end
 
   context "when $TEST_ENV_NUMBER is set" do
